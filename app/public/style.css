@@ -1,0 +1,156 @@
+:root {
+    --primary: #00ff00;
+    --bg-dark: #0a0a0a;
+    --card-bg: #161616;
+    --text-main: #e0e0e0;
+    --text-dim: #a0a0a0;
+    --border: #333;
+    --danger: #ff4444;
+    --warning: #ffaa00;
+}
+
+* {
+    box-sizing: border-box;
+}
+
+body {
+    background-color: var(--bg-dark);
+    color: var(--text-main);
+    font-family: 'Inter', system-ui, -apple-system, sans-serif;
+    margin: 0;
+    padding: 0;
+}
+
+.container {
+    max-width: 1000px;
+    margin: 0 auto;
+    padding: 2rem;
+}
+
+h1, h2, h3 {
+    font-weight: 700;
+    letter-spacing: -0.02em;
+}
+
+.card {
+    background: var(--card-bg);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    padding: 1.5rem;
+    margin-bottom: 1.5rem;
+    transition: transform 0.2s ease, border-color 0.2s ease;
+}
+
+.card:hover {
+    border-color: var(--primary);
+}
+
+button {
+    background: var(--primary);
+    color: black;
+    border: none;
+    padding: 0.75rem 1.5rem;
+    border-radius: 6px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: opacity 0.2s;
+}
+
+button:hover {
+    opacity: 0.9;
+}
+
+button.secondary {
+    background: #333;
+    color: white;
+}
+
+button.danger {
+    background: var(--danger);
+    color: white;
+}
+
+input {
+    background: #222;
+    border: 1px solid var(--border);
+    color: white;
+    padding: 0.75rem;
+    border-radius: 6px;
+    width: 100%;
+    margin-bottom: 1rem;
+}
+
+.grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+    gap: 1.5rem;
+}
+
+.status-new { color: var(--primary); }
+.status-preparing { color: var(--warning); }
+.status-shipping { color: #00bcff; }
+.status-delivered { color: #888; }
+
+#cart-count {
+    background: var(--primary);
+    color: black;
+    padding: 2px 8px;
+    border-radius: 10px;
+    font-size: 0.8rem;
+    margin-left: 5px;
+}
+
+nav {
+    display: flex;
+    gap: 1.5rem;
+    padding: 1rem 2rem;
+    background: #111;
+    border-bottom: 1px solid var(--border);
+}
+
+nav a {
+    color: var(--text-dim);
+    text-decoration: none;
+    font-weight: 500;
+}
+
+nav a:hover, nav a.active {
+    color: var(--primary);
+}
+
+.metric-card {
+    text-align: center;
+}
+.metric-value {
+    font-size: 2rem;
+    font-weight: bold;
+    color: var(--primary);
+}
+.metric-label {
+    font-size: 0.8rem;
+    color: var(--text-dim);
+    text-transform: uppercase;
+}
+
+/* Storm Generator Styles */
+.storm-control {
+    background: #1a1a1a;
+    padding: 2rem;
+    border-radius: 12px;
+    border: 1px dashed var(--primary);
+}
+
+.overload-warning {
+    background: var(--danger);
+    color: white;
+    padding: 1rem;
+    border-radius: 8px;
+    margin-bottom: 1rem;
+    animation: blink 1s infinite;
+}
+
+@keyframes blink {
+    0% { opacity: 1; }
+    50% { opacity: 0.5; }
+    100% { opacity: 1; }
+}

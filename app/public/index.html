@@ -1,0 +1,37 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>PingOrder - Login</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <div class="container" style="max-width: 400px; margin-top: 100px;">
+        <div class="card" style="text-align: center;">
+            <img src="images/logo.png" alt="Logo" style="width: 80px; border-radius: 50%; margin-bottom: 1rem;">
+            <h1 style="color: var(--primary); margin: 0;">PingOrder</h1>
+            <p style="color: var(--text-dim);">The world's fastest (but maybe unstable) fish market.</p>
+            <img src="images/mascot.png" alt="Mascot" style="width: 150px; margin-bottom: 1rem; border-radius: 12px;">
+            <form id="login-form">
+                <label>Username</label>
+                <input type="text" id="username" placeholder="Enter any name" required>
+                <button type="submit" style="width: 100%;">Enter Market</button>
+            </form>
+        </div>
+    </div>
+
+    <script src="client.js"></script>
+    <script>
+        document.getElementById('login-form').onsubmit = async (e) => {
+            e.preventDefault();
+            const username = document.getElementById('username').value;
+            const res = await fetch('/api/login', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ username })
+            });
+            if (res.ok) window.location.href = 'catalog.html';
+        };
+    </script>
+</body>
+</html>

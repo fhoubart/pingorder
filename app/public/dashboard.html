@@ -1,0 +1,116 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>PingOrder - Observability Dashboard</title>
+    <link rel="stylesheet" href="style.css">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+</head>
+<body>
+    <nav style="align-items: center;">
+        <img src="images/logo.png" alt="logo" style="height: 120px; border-radius: 50%; margin-right: 20px;">
+        <a href="catalog.html">Store</a>
+        <a href="dashboard.html" class="active">Observability</a>
+        <a href="storm.html">Storm Generator</a>
+        <div style="flex-grow: 1;"></div>
+        <a href="#" onclick="logout(); return false;" style="color: var(--danger); margin-right: 15px;">Logout</a>
+    </nav>
+
+    <div class="container">
+        <div style="display: flex; gap: 2rem; align-items: center; margin-bottom: 2rem;">
+            <img src="images/operator.png" alt="Operator" style="width: 120px; border-radius: 12px; border: 2px solid var(--primary);">
+            <h1 style="margin: 0; flex-grow: 1; display: flex; justify-content: space-between; align-items: center;">
+                System Health Monitoring
+                <span id="global-status" class="status-new">HEALTHY</span>
+            </h1>
+        </div>
+
+        <div class="grid">
+            <div class="card metric-card">
+                <div class="metric-value" id="m-reqs">0</div>
+                <div class="metric-label">Requests Served</div>
+            </div>
+            <div class="card metric-card">
+                <div class="metric-value" id="m-queue">0</div>
+                <div class="metric-label">Queue Depth</div>
+            </div>
+            <div class="card metric-card">
+                <div class="metric-value" id="m-cpu">0%</div>
+                <div class="metric-label">CPU Stress</div>
+            </div>
+            <div class="card metric-card">
+                <div class="metric-value" id="m-db">...</div>
+                <div class="metric-label">DB Primary Status</div>
+            </div>
+        </div>
+
+        <div class="card">
+            <h3>Infrastructure Chaos Controls</h3>
+            <div style="display: flex; gap: 10px; flex-wrap: wrap;">
+                <button class="danger" onclick="chaos('crash')">Force Crash (Process Exit)</button>
+                <button class="warning" onclick="chaos('slow')">Inject Latency (2s)</button>
+                <button class="danger" onclick="chaos('cpu-max')">Force 100% CPU Stress</button>
+                <button class="secondary" onclick="chaos('reset')">Reset States</button>
+            </div>
+        </div>
+
+        <div class="card">
+            <h3>Live Traffic Distribution</h3>
+            <canvas id="trafficChart" height="100"></canvas>
+        </div>
+    </div>
+
+    <script src="client.js"></script>
+    <script>
+        const ctx = document.getElementById('trafficChart').getContext('2d');
+        const chart = new Chart(ctx, {
+            type: 'bar',
+            data: {
+                labels: [],
+                datasets: [{
+                    label: 'Requests per Instance',
+                    data: [],
+                    backgroundColor: '#00ff00'
+                }]
+            },
+            options: { scales: { y: { beginAtZero: true } } }
+        });
+
+        const instanceData = {};
+
+        async function updateMetrics() {
+            try {
+                const res = await fetch('/api/metrics');
+                const data = await res.json();
+                
+                document.getElementById('m-reqs').innerText = data.requestsServed;
+                document.getElementById('m-queue').innerText = data.queueDepth;
+                document.getElementById('m-cpu').innerText = data.cpuStress + '%';
+                document.getElementById('m-db').innerText = data.dbStatus;
+
+                const statusEl = document.getElementById('global-status');
+                statusEl.innerText = data.overloadState;
+                statusEl.className = data.overloadState === 'CRITICAL' ? 'overload-warning' : 'status-new';
+
+                // Update Chart
+                instanceData[data.instanceId] = data.requestsServed;
+                chart.data.labels = Object.keys(instanceData);
+                chart.data.datasets[0].data = Object.values(instanceData);
+                chart.update();
+
+            } catch (e) {
+                document.getElementById('global-status').innerText = 'INSTANCE DOWN';
+                document.getElementById('global-status').className = 'overload-warning';
+            }
+        }
+
+        async function chaos(type) {
+            await fetch(`/chaos/${type}`, { method: 'POST' });
+            updateMetrics();
+        }
+
+        setInterval(updateMetrics, 1000);
+        updateMetrics();
+    </script>
+</body>
+</html>

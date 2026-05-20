@@ -1,0 +1,127 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>PingOrder - Traffic Storm Simulator</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <nav>
+        <a href="catalog.html">Store</a>
+        <a href="dashboard.html">Observability</a>
+        <a href="storm.html" class="active">Storm Generator</a>
+    </nav>
+
+    <div class="container">
+        <h1>Traffic Storm Simulator</h1>
+        <p>Stress test the infrastructure to observe horizontal scaling benefits.</p>
+
+        <div class="storm-control">
+            <h2 id="storm-status">Status: Idle</h2>
+            
+            <div style="margin: 20px 0;">
+                <label>Requests per second (Target): <b id="rps-val">10</b></label>
+                <input type="range" id="rps" min="1" max="100" value="10" oninput="document.getElementById('rps-val').innerText=this.value">
+            </div>
+
+            <div style="margin: 20px 0;">
+                <label>Virtual Users (Concurrency): <b id="vus-val">5</b></label>
+                <input type="range" id="vus" min="1" max="50" value="5" oninput="document.getElementById('vus-val').innerText=this.value">
+            </div>
+
+            <div style="margin: 20px 0; display: flex; gap: 20px;">
+                <label><input type="checkbox" id="chk-expensive"> Include /expensive (CPU Stress)</label>
+                <label><input type="checkbox" id="chk-login"> Random Logins</label>
+            </div>
+
+            <div style="display: flex; gap: 10px;">
+                <button id="start-btn" onclick="startStorm()">START STORM</button>
+                <button id="stop-btn" onclick="stopStorm()" class="danger" disabled>STOP STORM</button>
+            </div>
+        </div>
+
+        <div class="card" style="margin-top: 2rem;">
+            <h3>Live Storm Metrics</h3>
+            <div class="grid">
+                <div>
+                    <div class="metric-label">Requests Sent</div>
+                    <div class="metric-value" id="s-sent">0</div>
+                </div>
+                <div>
+                    <div class="metric-label">Errors (5xx)</div>
+                    <div class="metric-value" id="s-errors" style="color: var(--danger);">0</div>
+                </div>
+                <div>
+                    <div class="metric-label">Avg Latency</div>
+                    <div class="metric-value" id="s-latency">0ms</div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="client.js"></script>
+    <script>
+        let stormActive = false;
+        let stats = { sent: 0, errors: 0, latencies: [] };
+
+        async function fire() {
+            if (!stormActive) return;
+            
+            const start = Date.now();
+            const useExpensive = document.getElementById('chk-expensive').checked;
+            const url = useExpensive && Math.random() > 0.5 ? '/expensive' : '/api/products';
+            
+            try {
+                const res = await fetch(url);
+                const end = Date.now();
+                stats.sent++;
+                stats.latencies.push(end - start);
+                if (!res.ok) stats.errors++;
+            } catch (e) {
+                stats.sent++;
+                stats.errors++;
+            }
+            
+            updateStats();
+        }
+
+        function updateStats() {
+            document.getElementById('s-sent').innerText = stats.sent;
+            document.getElementById('s-errors').innerText = stats.errors;
+            if (stats.latencies.length > 0) {
+                const avg = stats.latencies.reduce((a, b) => a + b, 0) / stats.latencies.length;
+                document.getElementById('s-latency').innerText = Math.round(avg) + 'ms';
+            }
+        }
+
+        let intervals = [];
+
+        function startStorm() {
+            stormActive = true;
+            document.getElementById('storm-status').innerText = 'Status: STORMING ⚡';
+            document.getElementById('storm-status').style.color = 'var(--primary)';
+            document.getElementById('start-btn').disabled = true;
+            document.getElementById('stop-btn').disabled = false;
+
+            const rps = parseInt(document.getElementById('rps').value);
+            const vus = parseInt(document.getElementById('vus').value);
+
+            // Simple concurrency model
+            for (let i = 0; i < vus; i++) {
+                const int = setInterval(fire, 1000 / (rps / vus));
+                intervals.push(int);
+            }
+        }
+
+        function stopStorm() {
+            stormActive = false;
+            document.getElementById('storm-status').innerText = 'Status: Idle';
+            document.getElementById('storm-status').style.color = 'white';
+            document.getElementById('start-btn').disabled = false;
+            document.getElementById('stop-btn').disabled = true;
+            intervals.forEach(clearInterval);
+            intervals = [];
+        }
+    </script>
+</body>
+</html>

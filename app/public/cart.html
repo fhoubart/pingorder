@@ -1,0 +1,86 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>PingOrder - Shopping Cart</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <nav style="align-items: center;">
+        <img src="images/logo.png" alt="logo" style="height: 120px; border-radius: 50%; margin-right: 20px;">
+        <a href="catalog.html">Catalog</a>
+        <a href="cart.html" class="active">Cart <span id="cart-count">0</span></a>
+        <a href="tracking.html">My Orders</a>
+        <div style="flex-grow: 1;"></div>
+        <a href="dashboard.html">Observability</a>
+        <a href="storm.html">Storm Generator</a>
+        <a href="#" onclick="logout(); return false;" style="color: var(--danger); margin-right: 15px;">Logout</a>
+        <span id="user-display" style="color: var(--primary); font-weight: bold;"></span>
+    </nav>
+
+    <div class="container">
+        <h1>Your Shopping Cart</h1>
+        <div id="cart-items"></div>
+        <div class="card" style="margin-top: 2rem;">
+            <h3>Total: $<span id="cart-total">0</span></h3>
+            <button onclick="checkout()" id="checkout-btn">Checkout Now</button>
+            <button onclick="Cart.clear(); renderCart();" class="secondary">Empty Cart</button>
+        </div>
+    </div>
+
+    <script src="client.js"></script>
+    <script>
+        function renderCart() {
+            const items = Cart.get();
+            const list = document.getElementById('cart-items');
+            if (items.length === 0) {
+                list.innerHTML = '<p>Your cart is empty.</p>';
+                document.getElementById('checkout-btn').disabled = true;
+            } else {
+                list.innerHTML = items.map((p, index) => `
+                    <div class="card" style="display: flex; justify-content: space-between; align-items: center;">
+                        <div>
+                            <b>${p.name}</b>
+                            <div style="color: var(--text-dim);">$${p.price}</div>
+                        </div>
+                    </div>
+                `).join('');
+                document.getElementById('checkout-btn').disabled = false;
+            }
+            const total = items.reduce((sum, p) => sum + p.price, 0);
+            document.getElementById('cart-total').innerText = total;
+        }
+
+        async function checkout() {
+            const items = Cart.get();
+            const btn = document.getElementById('checkout-btn');
+            btn.innerText = 'Processing...';
+            btn.disabled = true;
+
+            try {
+                const res = await fetch('/api/checkout', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ items })
+                });
+                
+                if (res.ok) {
+                    Cart.clear();
+                    window.location.href = 'tracking.html';
+                } else {
+                    const data = await res.json();
+                    alert('Order failed: ' + (data.error || 'Server error'));
+                    btn.disabled = false;
+                    btn.innerText = 'Checkout Now';
+                }
+            } catch (e) {
+                alert('Connection error. Is the server down?');
+                btn.disabled = false;
+                btn.innerText = 'Checkout Now';
+            }
+        }
+
+        renderCart();
+    </script>
+</body>
+</html>

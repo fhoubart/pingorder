@@ -1,0 +1,62 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <title>PingOrder - Order Tracking</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+
+<body>
+    <nav style="align-items: center;">
+        <img src="images/logo.png" alt="logo" style="height: 120px; border-radius: 50%; margin-right: 20px;">
+        <a href="catalog.html">Catalog</a>
+        <a href="cart.html">Cart <span id="cart-count">0</span></a>
+        <a href="tracking.html" class="active">My Orders</a>
+        <div style="flex-grow: 1;"></div>
+        <a href="dashboard.html">Observability</a>
+        <a href="storm.html">Storm Generator</a>
+        <a href="#" onclick="logout(); return false;" style="color: var(--danger); margin-right: 15px;">Logout</a>
+        <span id="user-display" style="color: var(--primary); font-weight: bold;"></span>
+    </nav>
+
+    <div class="container">
+        <h1>Your Orders</h1>
+        <div id="order-list"></div>
+    </div>
+
+    <script src="client.js"></script>
+    <script>
+        async function loadOrders() {
+            try {
+                const res = await fetch('/api/my-orders');
+                const orders = await res.json();
+                const list = document.getElementById('order-list');
+
+                if (orders.length === 0) {
+                    list.innerHTML = '<p>No orders yet.</p>';
+                    return;
+                }
+
+                list.innerHTML = orders.map(o => `
+                    <div class="card">
+                        <div style="display: flex; justify-content: space-between;">
+                            <h3>Order #${o.id}</h3>
+                            <b class="status-${o.status.toLowerCase()}">${o.status}</b>
+                        </div>
+                        <div style="color: var(--text-dim); margin-top: 5px;">
+                            ${new Date(o.created_at).toLocaleString()} | Total: $${o.total}
+                        </div>
+                    </div>
+                `).join('');
+            } catch (e) {
+                document.getElementById('order-list').innerHTML = '<p style="color: red;">Failed to load orders.</p>';
+            }
+        }
+        loadOrders();
+        // Auto refresh status every 5s
+        setInterval(loadOrders, 5000);
+    </script>
+</body>
+
+</html>
