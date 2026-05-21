@@ -1,0 +1,25 @@
+version: '3.8'
+
+services:
+  app:
+    build: ./app
+    container_name: pingorder-app
+    ports:
+      - "3000:3000"
+    environment:
+      - INSTANCE_ID=pingorder-solo
+      - DATABASE_URL=postgresql://postgres:postgres@db:5432/pingorder
+      - SESSION_BACKEND=memory
+      - CPU_STRESS=1
+    depends_on:
+      - db
+
+  db:
+    image: postgres:15
+    container_name: pingorder-db
+    environment:
+      - POSTGRES_USER=postgres
+      - POSTGRES_PASSWORD=postgres
+      - POSTGRES_DB=pingorder
+    volumes:
+      - ./postgres/init.sql:/docker-entrypoint-initdb.d/init.sql
